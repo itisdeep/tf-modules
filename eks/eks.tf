@@ -8,12 +8,18 @@ data "aws_subnets" "private" {
   }
 }
 
+data "aws_subnet" "pvt" {
+  for_each = toset(data.aws_subnets.private.ids)
+  id       = each.value
+}
+
+
 resource "aws_eks_cluster" "this" {
   name     = var.cluster_name
   role_arn = aws_iam_role.this.arn
 
   vpc_config {
-    subnet_ids = [data.aws_subnets.private.id]
+    subnet_ids = [for subnet in data.aws_subnet.pvt: subnet.id]
   }
 
   depends_on = [
